@@ -322,7 +322,188 @@ const moneyEl = document.getElementById('money');
 function earn(v){ state.money+=v; moneyEl.textContent = fmt(state.money); }
 function canAfford(c){ return state.money>=c; }
 function spend(c){ if(!canAfford(c)) return false; state.money-=c; moneyEl.textContent = fmt(state.money); return true; }
+  
+  <style>
+    body { margin: 0; overflow: hidden; background: #202020; }
+    #ui {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      color: white;
+      font-family: Arial, sans-serif;
+      font-size: 18px;
+      background: rgba(0,0,0,0.5);
+      padding: 10px;
+      border-radius: 8px;
+    }
+    #shop {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 200px;
+      height: 300px;
+      background: rgba(0,0,0,0.7);
+      border: 2px solid #fff;
+      border-radius: 8px;
+      padding: 10px;
+      color: white;
+      overflow-y: auto;
+    }
+    button {
+      display: block;
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      border: none;
+      background: #4caf50;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled { background: gray; }
+  </style>
+</head>
+<body>
+  <div id="ui">💰 Money: <span id="money">0</span></div>
+  <div id="shop">
+    <h3>Shop</h3>
+    <button id="buyConveyor">Buy Conveyor ($50)</button>
+    <button id="buyDropper">Buy Dropper ($100)</button>
+  </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/controls/PointerLockControls.js"></script>
+
+  <script>
+    // === BASIC THREE.JS SETUP ===
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    // === LIGHTS ===
+    const light = new THREE.DirectionalLight(0xffffff, 1);
+    light.position.set(10,20,10);
+    scene.add(light);
+    scene.add(new THREE.AmbientLight(0x404040));
+
+    // === PLAYER ===
+    const playerGeo = new THREE.BoxGeometry(1,2,1);
+    const playerMat = new THREE.MeshStandardMaterial({color: 0x00ffcc});
+    const player = new THREE.Mesh(playerGeo, playerMat);
+    player.position.set(0,1,0);
+    scene.add(player);
+
+    // Camera follows player
+    camera.position.set(0, 2, 5);
+
+    // === CONTROLS ===
+    const controls = new THREE.PointerLockControls(camera, document.body);
+    document.body.addEventListener('click', () => controls.lock());
+
+    const keys = {};
+    document.addEventListener('keydown', e => keys[e.key.toLowerCase()] = true);
+    document.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    // === GROUND + WALLS ===
+    const groundGeo = new THREE.PlaneGeometry(50,50);
+    const groundMat = new THREE.MeshStandardMaterial({color: 0x228b22});
+    const ground = new THREE.Mesh(groundGeo, groundMat);
+    ground.rotation.x = -Math.PI/2;
+    scene.add(ground);
+
+    const wallMat = new THREE.MeshStandardMaterial({color: 0x555555});
+    function makeWall(x,z,rot){
+      const wall = new THREE.Mesh(new THREE.BoxGeometry(50,5,0.5), wallMat);
+      wall.position.set(x,2.5,z);
+      wall.rotation.y = rot;
+      scene.add(wall);
+    }
+    makeWall(0,25,0); makeWall(0,-25,0); makeWall(25,0,Math.PI/2); makeWall(-25,0,Math.PI/2);
+
+    // === MONEY SYSTEM ===
+    let money = 0;
+    const moneyUI = document.getElementById("money");
+
+    // Collector pad
+    const collectorGeo = new THREE.CylinderGeometry(1.5,1.5,0.5,32);
+    const collectorMat = new THREE.MeshStandardMaterial({color: 0xffff00});
+    const collector = new THREE.Mesh(collectorGeo, collectorMat);
+    collector.position.set(-5,0.25,-5);
+    scene.add(collector);
+
+    // === SECOND FLOOR ===
+    let secondFloorUnlocked = false;
+    const floor2 = new THREE.Mesh(new THREE.PlaneGeometry(50,50), new THREE.MeshStandardMaterial({color:0xcccccc, side:THREE.DoubleSide}));
+    floor2.rotation.x = -Math.PI/2;
+    floor2.position.y = 6;
+
+    const floorPadGeo = new THREE.CylinderGeometry(1.5,1.5,0.5,32);
+    const floorPadMat = new THREE.MeshStandardMaterial({color: 0x00ff00});
+    const floorPad = new THREE.Mesh(floorPadGeo, floorPadMat);
+    floorPad.position.set(5,0.25,-5);
+    scene.add(floorPad);
+
+    // === SHOP ===
+    document.getElementById("buyConveyor").onclick = () => {
+      if(money>=50){
+        money -= 50;
+        moneyUI.innerText = money;
+        alert("Bought a conveyor!");
+      }
+    };
+    document.getElementById("buyDropper").onclick = () => {
+      if(money>=100){
+        money -= 100;
+        moneyUI.innerText = money;
+        alert("Bought a dropper!");
+      }
+    };
+
+    // === ANIMATION LOOP ===
+    function animate(){
+      requestAnimationFrame(animate);
+
+      // Player movement
+      if(controls.isLocked){
+        const speed = 0.1;
+        if(keys['w']) controls.moveForward(speed);
+        if(keys['s']) controls.moveForward(-speed);
+        if(keys['a']) controls.moveRight(-speed);
+        if(keys['d']) controls.moveRight(speed);
+      }
+
+      // Step on collector
+      const distCollector = player.position.distanceTo(collector.position);
+      if(distCollector < 2){
+        money += 1;
+        moneyUI.innerText = money;
+      }
+
+      // Step on second floor pad
+      if(!secondFloorUnlocked){
+        const distPad = player.position.distanceTo(floorPad.position);
+        if(distPad < 2 && money >= 200){
+          money -= 200;
+          moneyUI.innerText = money;
+          scene.add(floor2);
+          secondFloorUnlocked = true;
+          floorPad.visible = false;
+          alert("Second floor unlocked!");
+        }
+      }
+
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize',()=>{
+      camera.aspect=window.innerWidth/window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth,window.innerHeight);
+    }
+  
 // ---------- Buy Pads ----------
 const buyPads=[]; // {mesh, label, cost, onBuy, purchased:false}
 const labelCanvas = (text)=>{ // simple dynamic label sprite
