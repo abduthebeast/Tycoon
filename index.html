@@ -3,375 +3,308 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Roblox-Style Tycoon (HTML/CSS/JS, Single File)</title>
+<title>Roblox-Style Tycoon – Single File</title>
 <style>
   :root{
-    --bg:#0b1025; --panel:#0f172a; --card:#111827; --muted:#94a3b8; --text:#e5e7eb;
-    --accent:#22c55e; --accent2:#38bdf8; --warn:#f59e0b; --danger:#ef4444;
+    --ui:#0b132a; --panel:#0f172a; --muted:#94a3b8; --text:#e5e7eb; --accent:#22c55e; --buy:#fbbf24;
   }
-  *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0;background:linear-gradient(180deg,#0b1025,#0f172a 40%);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+  body{margin:0;background:#0b1025;color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;overflow:hidden}
   #hud{position:fixed;inset:0;pointer-events:none}
-  .topbar{position:absolute;left:12px;top:10px;display:flex;gap:12px;align-items:center;pointer-events:auto}
-  .badge{background:rgba(17,24,39,.7);border:1px solid #1f253d;padding:8px 12px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.35);font-variant-numeric:tabular-nums}
-  .money{font-weight:700;font-size:18px}
-  .mult{opacity:.9}
-  .btn{background:#0b132a;border:1px solid #1f2b52;padding:8px 12px;border-radius:10px;color:#cfe8ff;cursor:pointer;user-select:none}
-  .btn:hover{background:#0e1733}
+  .top{position:absolute;left:10px;top:10px;display:flex;gap:10px;pointer-events:auto}
+  .badge{background:rgba(12,18,38,.8);border:1px solid #1f2b52;padding:8px 12px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,.35);font-variant-numeric:tabular-nums}
+  .money{font-weight:800}
+  .help{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(12,18,38,.85);border:1px solid #1f2b52;padding:8px 12px;border-radius:12px;pointer-events:auto;font-size:13px}
+  .btn{background:#0b132a;border:1px solid #1f2b52;padding:6px 10px;border-radius:8px;color:#cfe8ff;cursor:pointer}
   .btn:disabled{opacity:.5;cursor:not-allowed}
-  .panel{position:absolute;right:12px;top:10px;width:320px;max-height:90vh;overflow:auto;padding:10px;background:rgba(17,24,39,.7);border:1px solid #1f253d;border-radius:16px;box-shadow:0 20px 50px rgba(0,0,0,.35);pointer-events:auto}
-  .panel h3{margin:6px 0 8px 0;font-size:16px;letter-spacing:.3px}
-  .row{display:flex;gap:8px;align-items:center;justify-content:space-between;margin:6px 0}
-  .pill{display:flex;gap:8px;align-items:center;background:#0b132a;border:1px solid #1f2b52;padding:8px 10px;border-radius:999px}
-  .buy{background:#1d3a22;border:1px solid #2c6a3a;color:#d7ffe0}
-  .buy:hover{background:#214227}
-  .danger{background:#3a1d1d;border:1px solid #6a2c2c;color:#ffd7d7}
-  .grid-toggle{margin-left:8px}
-  .minimap{position:absolute;left:12px;bottom:12px;width:180px;height:180px;border-radius:12px;border:1px solid #1f253d;background:rgba(17,24,39,.7);box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:auto}
-  .hint{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);background:rgba(17,24,39,.7);border:1px solid #1f253d;padding:8px 12px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:auto;font-size:13px}
-  .place-tooltip{position:absolute;transform:translate(-50%, -130%);background:#111827;padding:6px 8px;border:1px solid #263247;border-radius:8px;font-size:12px;white-space:nowrap}
-  .toast{position:absolute;right:12px;bottom:12px;background:#111827;border:1px solid #263247;padding:8px 10px;border-radius:10px;box-shadow:0 10px 30px rgba(0,0,0,.35);pointer-events:auto;max-width:360px}
+  .toast{position:absolute;right:10px;bottom:10px;background:#0b132a;border:1px solid #1f2b52;padding:8px 10px;border-radius:10px;pointer-events:auto;max-width:320px}
   canvas{display:block;outline:none}
 </style>
 </head>
 <body>
-  <!-- Three.js core -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/build/three.min.js"></script>
-
-<!-- OrbitControls -->
-<script src="https://cdn.jsdelivr.net/npm/three@0.158.0/examples/js/controls/OrbitControls.js"></script>
 <div id="hud">
-  <div class="topbar">
+  <div class="top">
     <div class="badge money">💰 <span id="money">0</span></div>
-    <div class="badge mult">🎖️ Mult: <span id="mult">1.0x</span></div>
-    <button class="btn" id="saveBtn" title="Save to localStorage">Save</button>
-    <button class="btn" id="loadBtn" title="Load from localStorage">Load</button>
+    <div class="badge">🎛️ <span id="status">WASD move • Mouse drag look • E interact</span></div>
+    <button id="saveBtn" class="btn">Save</button>
+    <button id="loadBtn" class="btn">Load</button>
+    <button id="resetBtn" class="btn">Reset</button>
   </div>
-
-  <div class="panel" id="shopPanel">
-    <h3>🛒 Shop</h3>
-    <div class="row"><div class="pill">➕ Basic Dropper (Tier 1)</div><button class="btn buy" id="buyDropper1"></button></div>
-    <div class="row"><div class="pill">⚙️ Conveyor Segment</div><button class="btn buy" id="buyConveyor"></button></div>
-    <div class="row"><div class="pill">🚀 Conveyor Speed</div><button class="btn buy" id="buySpeed"></button></div>
-    <div class="row"><div class="pill">💎 Advanced Dropper (Tier 2)</div><button class="btn buy" id="buyDropper2"></button></div>
-    <div class="row"><div class="pill">🔥 Elite Dropper (Tier 3)</div><button class="btn buy" id="buyDropper3"></button></div>
-    <div class="row"><div class="pill">🧠 Hire Worker (auto-fix stuck items)</div><button class="btn buy" id="buyWorker"></button></div>
-
-    <h3>⚙️ Settings</h3>
-    <div class="row">
-      <div class="pill">Grid <input id="gridToggle" class="grid-toggle" type="checkbox" checked></div>
-      <div class="pill">FOV <input id="fov" type="range" min="50" max="95" value="74"></div>
-    </div>
-
-    <h3>♻️ Prestige</h3>
-    <div class="row"><div class="pill">Rebirth (reset for ×1.5 mult)</div><button class="btn danger" id="rebirthBtn">Rebirth</button></div>
-  </div>
-
-  <canvas class="minimap" id="minimap"></canvas>
-  <div class="hint">Click to lock mouse • WASD move • Space jump • Shift sprint • R rotate placement • Q/E raise/lower in placement • Esc to unlock</div>
-  <div class="toast" id="toast" hidden></div>
+  <div class="help">Step on <b>glowing yellow circles</b> to buy (press <b>E</b>). Items ride conveyors into the collector to earn cash.</div>
+  <div id="toast" class="toast" hidden></div>
 </div>
 
 <!-- Three.js -->
 <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/js/libs/stats.min.js"></script>
 
 <script>
-/* ===============================
-   Roblox-Style Tycoon (Single File)
+/* ==========================================================
+   Roblox-Style Tycoon – Full Single-File Demo (HTML+CSS+JS)
    Systems:
-   - World + Player (PointerLock)
-   - Conveyors, Droppers (3 tiers), Items
-   - Collector station + particles + sound
-   - Shop with placement mode
-   - Save/Load (localStorage)
-   - Day/Night cycle
-   - Minimap & Settings
-   - Worker NPC, Prestige
-================================= */
+   - Scene, lighting, sky
+   - Player (WASD) + mouse-drag camera (3rd person follow)
+   - Conveyors, droppers (tiers), items with values
+   - Collector with earnings + particles
+   - Buy pads you step on & press E to purchase machines & floors
+   - Save/Load to localStorage
+========================================================== */
 
 // ---------- Utility ----------
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
 const lerp=(a,b,t)=>a+(b-a)*t;
 const rand=(a,b)=>a+Math.random()*(b-a);
-const TAU=Math.PI*2;
-
-function fmt(n){ // money formatting
-  if(n>=1e12) return (n/1e12).toFixed(2)+'T';
-  if(n>=1e9) return (n/1e9).toFixed(2)+'B';
-  if(n>=1e6) return (n/1e6).toFixed(2)+'M';
-  if(n>=1e3) return (n/1e3).toFixed(2)+'K';
-  return Math.floor(n).toString();
-}
-
-function toast(msg, ms=1800){
-  const el=document.getElementById('toast');
-  el.textContent=msg; el.hidden=false;
-  clearTimeout(toast._t);
-  toast._t=setTimeout(()=>el.hidden=true, ms);
-}
+function fmt(n){ if(n>=1e9) return (n/1e9).toFixed(2)+'B'; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(1)+'K'; return Math.floor(n).toString(); }
+function toast(msg, ms=1600){ const el=document.getElementById('toast'); el.textContent=msg; el.hidden=false; clearTimeout(toast._t); toast._t=setTimeout(()=>el.hidden=true,ms); }
 
 // ---------- State ----------
-let state={
+let state = {
   money: 150,
-  mult: 1.0,
-  speed: 1.0,         // conveyor speed multiplier
-  worker: false,
-  grid:true,
-  fov:74,
-  // dynamic arrays:
-  conveyors:[], // {pos:[x,y,z], rotY:number}
-  droppers:[],  // {pos:[x,y,z], rotY:number, tier:1|2|3}
+  floorsUnlocked: 1,
+  conveyors: [],    // saved: {pos:[x,y,z], rotY}
+  droppers: [],     // saved: {pos:[x,y,z], rotY, tier}
+  hasCollector: false
 };
 
-const COSTS={
-  dropper1:  50,
-  dropper2:  400,
-  dropper3:  2000,
-  conveyor:  75,
-  speed:     300,
-  worker:    1200,
+const TIER = {
+  1: { rate: 1.1, value: 10, color: 0x22c55e },
+  2: { rate: 1.6, value: 35, color: 0xf59e0b },
+  3: { rate: 2.2, value: 120, color: 0x38bdf8 }
 };
 
-const SCALING={
-  dropper: 1.22,
-  conveyor:1.18,
-  speed:   1.35,
-  worker:  1.6,
+const COST = {
+  conveyor: 75,
+  collector: 200,
+  dropper1: 60,
+  dropper2: 300,
+  dropper3: 1200,
+  floor2: 500,
+  floor3: 2500
 };
 
-const TIERS={
-  1:{rate:1.25, value:10, color:0x22c55e},
-  2:{rate:1.6,  value:35, color:0xf59e0b},
-  3:{rate:2.2,  value:120,color:0x38bdf8},
-};
+// ---------- Three Setup ----------
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x86c6ff); // sky
 
-// ---------- Three.js Setup ----------
-const scene=new THREE.Scene();
-scene.background=new THREE.Color(0x87c0ff); // day sky (changes)
-const camera=new THREE.PerspectiveCamera(state.fov, innerWidth/innerHeight, 0.1, 500);
-const renderer=new THREE.WebGLRenderer({antialias:true});
+const camera = new THREE.PerspectiveCamera(74, innerWidth/innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth, innerHeight);
-renderer.shadowMap.enabled=true;
+renderer.shadowMap.enabled = true;
 document.body.appendChild(renderer.domElement);
 
 // Lights
-const dirLight=new THREE.DirectionalLight(0xffffff,1.0);
-dirLight.position.set(30,60,30);
-dirLight.castShadow=true;
-dirLight.shadow.mapSize.set(2048,2048);
-scene.add(dirLight);
-scene.add(new THREE.AmbientLight(0xffffff,0.35));
+const sun = new THREE.DirectionalLight(0xffffff, 1.0);
+sun.position.set(30, 50, 20);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048,2048);
+scene.add(sun);
+scene.add(new THREE.AmbientLight(0xffffff, 0.35));
 
-// Ground & Grid
-const groundGeo=new THREE.PlaneGeometry(200,200);
-const groundMat=new THREE.MeshStandardMaterial({color:0x2a3b20});
-const ground=new THREE.Mesh(groundGeo, groundMat);
-ground.rotation.x=-Math.PI/2; ground.receiveShadow=true;
+// Ground
+const ground = new THREE.Mesh(
+  new THREE.PlaneGeometry(140,140),
+  new THREE.MeshStandardMaterial({color:0x2f7d32})
+);
+ground.rotation.x = -Math.PI/2;
+ground.receiveShadow = true;
 scene.add(ground);
 
-const gridHelper=new THREE.GridHelper(200, 200, 0x2f415f, 0x1a2536);
-gridHelper.position.y=0.01;
-scene.add(gridHelper);
-
-// Player (capsule)
-const player={
-  obj:new THREE.Object3D(),
-  vel:new THREE.Vector3(),
-  onGround:false,
-};
-scene.add(player.obj);
-const playerBody=new THREE.Mesh(
-  new THREE.CapsuleGeometry(0.4, 1.0, 8, 16),
-  new THREE.MeshStandardMaterial({color:0xffeb7a})
+// Baseplate
+const base = new THREE.Mesh(
+  new THREE.BoxGeometry(24,0.4,20),
+  new THREE.MeshStandardMaterial({color:0x3a3a3a})
 );
-playerBody.castShadow=true;
-player.obj.add(playerBody);
-
-// Camera boom
-const camPivot=new THREE.Object3D();
-camPivot.position.set(0,1.1,0);
-player.obj.add(camPivot);
-const camBoom=new THREE.Object3D();
-camBoom.position.set(0,0,0);
-camPivot.add(camBoom);
-camera.position.set(0,1.2,3.5);
-camBoom.add(camera);
-
-// Collector station
-const collector=new THREE.Mesh(
-  new THREE.BoxGeometry(2,1,2),
-  new THREE.MeshStandardMaterial({color:0x7074ff, metalness:.1, roughness:.6})
-);
-collector.position.set(6,0.5,0);
-collector.castShadow=true; collector.receiveShadow=true;
-scene.add(collector);
-
-const collectorGlow=new THREE.Mesh(
-  new THREE.BoxGeometry(1.2,0.6,1.2),
-  new THREE.MeshBasicMaterial({color:0xffff00})
-);
-collectorGlow.position.set(0,0.5,0);
-collector.add(collectorGlow);
-
-// Base pad
-const base=new THREE.Mesh(
-  new THREE.BoxGeometry(14,0.3,10),
-  new THREE.MeshStandardMaterial({color:0x3b3b3b})
-);
-base.position.set(0,0.15,0);
-base.receiveShadow=true;
+base.position.set(0,0.2,0);
+base.receiveShadow=true; base.castShadow=true;
 scene.add(base);
 
-// Initial conveyor and dropper for orientation
-// (Players will add more via placement)
-addConveyor({x:-3.5,y:0.2,z:0, rotY:0}); // short intro segment
-
-// ---------- Physics & Colliders (simple) ----------
-const colliders=[ground, base, collector]; // ground is infinite plane for y
-
-// ---------- Input / Pointer Lock ----------
-const keys={};
-document.addEventListener('keydown',e=>keys[e.code]=true);
-document.addEventListener('keyup',e=>keys[e.code]=false);
-
-renderer.domElement.addEventListener('click',()=>renderer.domElement.requestPointerLock());
-document.addEventListener('pointerlockchange',()=>{
-  if(document.pointerLockElement===renderer.domElement){ document.addEventListener('mousemove', onMouseMove); }
-  else { document.removeEventListener('mousemove', onMouseMove); }
-});
-
-let yaw=0,pitch=0;
-function onMouseMove(e){
-  const sens=0.0022;
-  yaw-=e.movementX*sens;
-  pitch-=e.movementY*sens;
-  pitch=clamp(pitch,-1.1,1.1);
-  camPivot.rotation.y=yaw;
-  camPivot.rotation.x=pitch;
+// Floors (second & third spawn later)
+const floors = [base];
+function addUpperFloor(level){ // level 2 => y=5, level 3 => y=10
+  const y = (level-1)*5 + 0.2;
+  const f = new THREE.Mesh(new THREE.BoxGeometry(24,0.4,20), new THREE.MeshStandardMaterial({color:0x515151}));
+  f.position.set(0,y,0);
+  f.receiveShadow=true; f.castShadow=true;
+  scene.add(f); floors[level-1]=f;
+  // stairs up to that level
+  const stairs = new THREE.Mesh(new THREE.BoxGeometry(2,5,4), new THREE.MeshStandardMaterial({color:0x666}));
+  stairs.position.set(-10, y/2, 7.5);
+  scene.add(stairs);
 }
 
-// ---------- Conveyor / Dropper / Item Systems ----------
-const conveyors=[]; // {mesh, dir:THREE.Vector3}
-const droppers=[];  // {mesh, tier, cooldown}
+// ---------- Player ----------
+const player = new THREE.Mesh(
+  new THREE.BoxGeometry(1,2,1),
+  new THREE.MeshStandardMaterial({color:0x2ea8ff})
+);
+player.position.set(0,1,6);
+player.castShadow=true; player.receiveShadow=true;
+scene.add(player);
 
-const items=[];     // {mesh, vel:Vector3}
+let yaw = 0, pitch = 0;
+let dragging = false;
+window.addEventListener('mousedown',()=>dragging=true);
+window.addEventListener('mouseup',()=>dragging=false);
+window.addEventListener('mousemove',e=>{
+  if(!dragging) return;
+  yaw -= e.movementX*0.003;
+  pitch = clamp(pitch - e.movementY*0.003, -0.9, 0.9);
+});
 
-function addConveyor({x,y,z, rotY}){
-  const geo=new THREE.BoxGeometry(3,0.2,1.6);
-  const mat=new THREE.MeshStandardMaterial({color:0x3333ff, metalness:.2, roughness:.7});
-  const m=new THREE.Mesh(geo, mat);
-  m.position.set(x,y,z);
-  m.rotation.y=rotY||0;
+const keys={};
+window.addEventListener('keydown',e=>keys[e.key.toLowerCase()]=true);
+window.addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+
+function updatePlayer(dt){
+  const forward = new THREE.Vector3(Math.sin(yaw),0,-Math.cos(yaw));
+  const right = new THREE.Vector3(-forward.z,0,forward.x);
+  let dir = new THREE.Vector3();
+  if(keys['w']) dir.add(forward);
+  if(keys['s']) dir.sub(forward);
+  if(keys['a']) dir.sub(right);
+  if(keys['d']) dir.add(right);
+  if(dir.lengthSq()>0) dir.normalize();
+  const speed = keys['shift']? 9 : 5.5;
+  player.position.addScaledVector(dir, speed*dt);
+  // clamp inside play area
+  player.position.x = clamp(player.position.x, -65, 65);
+  player.position.z = clamp(player.position.z, -65, 65);
+
+  // camera follow boom
+  const camDist = 9, camHeight=4;
+  const camTarget = player.position.clone();
+  const camPos = player.position.clone()
+    .addScaledVector(forward, -camDist)
+    .add(new THREE.Vector3(0,camHeight,0));
+  camera.position.lerp(camPos, 1 - Math.pow(0.001, dt*60));
+  camera.lookAt(camTarget);
+}
+
+// ---------- Machines ----------
+const conveyors = []; // {mesh, dir:Vector3}
+const droppers = [];  // {mesh, tier, cooldown}
+const items = [];     // {mesh, vel:Vector3, tier}
+let collector = null;
+
+function addConveyor(pos, rotY){
+  const m = new THREE.Mesh(
+    new THREE.BoxGeometry(4,0.25,1.8),
+    new THREE.MeshStandardMaterial({color:0x3b3bff, metalness:.15, roughness:.7})
+  );
+  m.position.copy(pos);
+  m.rotation.y = rotY||0;
   m.castShadow=true; m.receiveShadow=true;
   scene.add(m);
-
-  const dir=new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), m.rotation.y);
+  const dir = new THREE.Vector3(1,0,0).applyAxisAngle(new THREE.Vector3(0,1,0), m.rotation.y);
   conveyors.push({mesh:m, dir});
-  state.conveyors.push({pos:[x,y,z], rotY:m.rotation.y});
+  state.conveyors.push({pos:[pos.x,pos.y,pos.z], rotY:m.rotation.y});
   return m;
 }
 
-function addDropper({x,y,z, rotY=0, tier=1}){
-  const t=TIERS[tier];
-  const body=new THREE.Mesh(
-    new THREE.BoxGeometry(0.8,1.2,0.8),
+function addDropper(pos, rotY, tier){
+  const t = TIER[tier];
+  const body = new THREE.Mesh(
+    new THREE.BoxGeometry(0.9,1.4,0.9),
     new THREE.MeshStandardMaterial({color:t.color, metalness:.2, roughness:.7})
   );
-  body.position.set(x,y+0.6,z);
-  body.rotation.y=rotY;
+  body.position.copy(pos).add(new THREE.Vector3(0,0.7,0));
+  body.rotation.y = rotY||0;
   body.castShadow=true; body.receiveShadow=true;
 
-  const spout=new THREE.Mesh(
-    new THREE.BoxGeometry(0.4,0.4,0.6),
-    new THREE.MeshStandardMaterial({color:0x222})
-  );
-  spout.position.set(0,-0.2,0.6);
+  const spout = new THREE.Mesh(new THREE.BoxGeometry(0.4,0.3,0.6), new THREE.MeshStandardMaterial({color:0x222}));
+  spout.position.set(0,-0.3,0.6);
   body.add(spout);
 
   scene.add(body);
-  const d={mesh:body, tier, cooldown:rand(0.2,0.9)};
-  droppers.push(d);
-  state.droppers.push({pos:[x,y,z], rotY, tier});
+  droppers.push({mesh:body, tier, cooldown:rand(0.3,0.9)});
+  state.droppers.push({pos:[pos.x,pos.y,pos.z], rotY:body.rotation.y, tier});
   return body;
 }
 
-function spawnItem(pos, tier){
-  const t=TIERS[tier];
-  const geo=new THREE.BoxGeometry(0.35,0.35,0.35);
-  const mat=new THREE.MeshStandardMaterial({color:t.color});
-  const cube=new THREE.Mesh(geo, mat);
-  cube.position.copy(pos);
+function addCollector(pos){
+  const c = new THREE.Mesh(
+    new THREE.BoxGeometry(2.2,0.9,2.2),
+    new THREE.MeshStandardMaterial({color:0x7074ff})
+  );
+  c.position.copy(pos).add(new THREE.Vector3(0,0.45,0));
+  c.castShadow=true; c.receiveShadow=true;
+  scene.add(c);
+  const glow = new THREE.Mesh(new THREE.BoxGeometry(1.2,0.5,1.2), new THREE.MeshBasicMaterial({color:0xffff66}));
+  glow.position.set(0,0.25,0);
+  c.add(glow);
+  collector = c;
+  state.hasCollector = true;
+  return c;
+}
+
+function spawnItem(worldPos, tier){
+  const t = TIER[tier];
+  const cube = new THREE.Mesh(
+    new THREE.BoxGeometry(0.35,0.35,0.35),
+    new THREE.MeshStandardMaterial({color:t.color})
+  );
+  cube.position.copy(worldPos);
   cube.castShadow=true; cube.receiveShadow=true;
   scene.add(cube);
   items.push({mesh:cube, vel:new THREE.Vector3(0,0,0), tier});
 }
 
-function moveItems(dt){
-  const speed=1.2*state.speed;
-  // For each item, find closest conveyor it's above and project motion along it
+function updateDroppers(dt){
+  for(const d of droppers){
+    d.cooldown -= dt * TIER[d.tier].rate;
+    if(d.cooldown<=0){
+      d.cooldown = 1;
+      const wp = new THREE.Vector3(0,-0.25,0.9).applyMatrix4(d.mesh.matrixWorld);
+      spawnItem(wp, d.tier);
+    }
+  }
+}
+
+function updateItems(dt){
+  const speed = 1.25;
   for(let i=items.length-1;i>=0;i--){
-    const it=items[i]; const m=it.mesh;
-    // gravity
-    it.vel.y-=9*dt;
+    const it = items[i], m = it.mesh;
+
+    // gravity + floor clamp (simple)
+    it.vel.y -= 9*dt;
     m.position.addScaledVector(it.vel, dt);
+    if(m.position.y<0.25){ m.position.y=0.25; it.vel.y=0; }
 
-    // Simple ground clamp
-    if(m.position.y<0.3){ m.position.y=0.3; it.vel.y=0; }
-
-    // Check conveyor surfaces proximity
-    let applied=false;
+    // ride conveyors
     for(const c of conveyors){
-      const surfY=c.mesh.position.y+0.2; // top surface
-      const local=m.position.clone().sub(c.mesh.position).applyAxisAngle(new THREE.Vector3(0,1,0), -c.mesh.rotation.y);
-      if(Math.abs(local.y-(surfY-c.mesh.position.y))<0.25 && Math.abs(local.x)<=1.6 && Math.abs(local.z)<=0.9){
-        // On top of conveyor: stick and move along its dir
-        m.position.y=surfY+0.05;
+      const topY = c.mesh.position.y+0.125;
+      const lp = m.position.clone().sub(c.mesh.position).applyAxisAngle(new THREE.Vector3(0,1,0), -c.mesh.rotation.y);
+      if(Math.abs(lp.y-(topY-c.mesh.position.y))<0.22 && Math.abs(lp.x)<=2.1 && Math.abs(lp.z)<=0.95){
+        // on top
+        m.position.y = topY + 0.05;
         it.vel.set(0,0,0);
         m.position.addScaledVector(c.dir, speed*dt);
-        applied=true;
         break;
       }
     }
 
-    // Collector check (simple box distance)
-    if(m.position.distanceTo(collector.position)<1.1){
-      const value=TIERS[it.tier].value*state.mult;
-      earn(value);
+    // collector
+    if(collector && m.position.distanceTo(collector.position)<1.2){
+      const val = TIER[it.tier].value;
+      earn(val);
       burst(collector.position, 8);
-      scene.remove(m); items.splice(i,1);
-      continue;
+      scene.remove(m); items.splice(i,1); continue;
     }
 
-    // Cleanup if it flies away
     if(Math.abs(m.position.x)>300||Math.abs(m.position.z)>300){ scene.remove(m); items.splice(i,1); }
   }
 }
 
-function updateDroppers(dt){
-  for(const d of droppers){
-    d.cooldown-=dt*TIERS[d.tier].rate;
-    if(d.cooldown<=0){
-      d.cooldown=1;
-      const worldPos=new THREE.Vector3(0,-0.3,1.0).applyMatrix4(d.mesh.matrixWorld);
-      spawnItem(worldPos, d.tier);
-    }
-  }
-}
-
-// ---------- Particles ----------
+// particles
 const particles=[];
-function burst(center, count=10){
+function burst(center,count=10){
   for(let i=0;i<count;i++){
-    const p=new THREE.Mesh(
-      new THREE.SphereGeometry(0.06,8,8),
-      new THREE.MeshStandardMaterial({color:0xffff88, emissive:0x443300})
-    );
+    const p = new THREE.Mesh(new THREE.SphereGeometry(0.06,8,8),
+      new THREE.MeshStandardMaterial({color:0xffff88, emissive:0x442200}));
     p.position.copy(center);
-    p.userData.vel=new THREE.Vector3(rand(-1,1), rand(1.2,2.2), rand(-1,1));
-    p.userData.life=0.8;
-    scene.add(p);
-    particles.push(p);
+    p.userData.vel = new THREE.Vector3(rand(-1,1),rand(1.2,2.2),rand(-1,1));
+    p.userData.life = 0.7;
+    scene.add(p); particles.push(p);
   }
 }
 function updateParticles(dt){
@@ -384,313 +317,182 @@ function updateParticles(dt){
   }
 }
 
-// ---------- Economy ----------
-function earn(v){
-  state.money+=v;
-  updateUI();
-}
+// ---------- Economy/UI ----------
+const moneyEl = document.getElementById('money');
+function earn(v){ state.money+=v; moneyEl.textContent = fmt(state.money); }
 function canAfford(c){ return state.money>=c; }
-function spend(c){
-  if(!canAfford(c)) return false;
-  state.money-=c; updateUI(); return true;
+function spend(c){ if(!canAfford(c)) return false; state.money-=c; moneyEl.textContent = fmt(state.money); return true; }
+
+// ---------- Buy Pads ----------
+const buyPads=[]; // {mesh, label, cost, onBuy, purchased:false}
+const labelCanvas = (text)=>{ // simple dynamic label sprite
+  const c=document.createElement('canvas'); c.width=256; c.height=128;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,c.width,c.height);
+  ctx.fillStyle='#fff'; ctx.font='24px Inter, Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text, c.width/2, c.height/2);
+  const tex = new THREE.CanvasTexture(c); tex.needsUpdate=true; return tex;
+};
+
+function addBuyPad(pos, cost, text, onBuy){
+  const pad = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.1,1.1,0.2,32),
+    new THREE.MeshStandardMaterial({color:0xfbbf24, transparent:true, opacity:0.8})
+  );
+  pad.position.copy(pos);
+  pad.rotation.x=0;
+  pad.castShadow=true; pad.receiveShadow=true;
+  scene.add(pad);
+
+  const sign = new THREE.Sprite(new THREE.SpriteMaterial({map:labelCanvas(`${text}\n$${fmt(cost)}`)}));
+  sign.scale.set(2.6,1.3,1);
+  sign.position.set(0,1.6,0);
+  pad.add(sign);
+
+  buyPads.push({mesh:pad, cost, onBuy, label:text, purchased:false, sign});
+  return pad;
 }
 
-function price(key, base){
-  // scale by owned count
-  let n=0;
-  if(key.startsWith('dropper')) n=state.droppers.filter(d=>`dropper${d.tier}`===key).length;
-  if(key==='conveyor') n=state.conveyors.length;
-  if(key==='speed') n=Math.floor((state.speed-1)*10); // each +0.1 counts
-  if(key==='worker') n=state.worker?1:0;
-  const factor = SCALING[key] ?? 1.2;
-  return Math.floor(base*Math.pow(factor, n));
-}
-
-// ---------- Build / Placement ----------
-let buildMode=null; // {type:'conveyor'|'dropper', tier?, rotY, heightOffset}
-let ghost=null;
-
-function setBuildMode(m){ // m = null or {type,tier?}
-  buildMode=m;
-  if(ghost){ scene.remove(ghost); ghost=null; }
-  if(!m) return;
-  if(m.type==='conveyor'){
-    ghost=new THREE.Mesh(new THREE.BoxGeometry(3,0.2,1.6), new THREE.MeshStandardMaterial({color:0x99aaff,transparent:true,opacity:.4}));
-  } else if(m.type==='dropper'){
-    const color=TIERS[m.tier].color;
-    ghost=new THREE.Mesh(new THREE.BoxGeometry(0.8,1.2,0.8), new THREE.MeshStandardMaterial({color,transparent:true,opacity:.4}));
-  }
-  ghost.castShadow=false; ghost.receiveShadow=false;
-  scene.add(ghost);
-  buildMode.rotY=0;
-  buildMode.heightOffset=0;
-}
-
-const raycaster=new THREE.Raycaster();
-const mouse=new THREE.Vector2();
-window.addEventListener('mousemove',(e)=>{
-  if(!buildMode||!ghost) return;
-  mouse.x=(e.clientX/innerWidth)*2-1;
-  mouse.y=-(e.clientY/innerHeight)*2+1;
-  raycaster.setFromCamera(mouse, camera);
-  const inter=raycaster.intersectObjects([ground, base], true)[0];
-  if(inter){
-    ghost.position.copy(inter.point);
-    ghost.position.y=0.2+buildMode.heightOffset;
-    ghost.rotation.y=buildMode.rotY;
-  }
-});
-window.addEventListener('mousedown',(e)=>{
-  // Place if in build mode
-  if(buildMode && e.button===0){
-    if(buildMode.type==='conveyor'){
-      const cost=price('conveyor', COSTS.conveyor);
-      if(spend(cost)){
-        addConveyor({x:ghost.position.x, y:ghost.position.y, z:ghost.position.z, rotY:ghost.rotation.y});
-        toast(`Placed conveyor ($${fmt(cost)})`);
-      } else toast('Not enough money!');
-    } else if(buildMode.type==='dropper'){
-      const key=`dropper${buildMode.tier}`;
-      const base=COSTS[`dropper${buildMode.tier}`];
-      const cost=price(key, base);
-      if(spend(cost)){
-        addDropper({x:ghost.position.x, y:0.0, z:ghost.position.z, rotY:ghost.rotation.y, tier:buildMode.tier});
-        toast(`Placed Tier ${buildMode.tier} dropper ($${fmt(cost)})`);
-      } else toast('Not enough money!');
+function updateBuyPads(dt){
+  for(const b of buyPads){
+    if(b.purchased) continue;
+    // hover pulse
+    b.mesh.scale.setScalar(1+Math.sin(performance.now()*0.005)*0.03);
+    // proximity + key E
+    if(player.position.distanceTo(b.mesh.position)<1.8){
+      // show “Press E”
+      document.getElementById('status').textContent = `Press E to buy ${b.label} ($${fmt(b.cost)})`;
+      if(keys['e']){
+        if(spend(b.cost)){
+          b.purchased=true;
+          b.mesh.material.color.set(0x22c55e);
+          b.sign.material.map = labelCanvas(`${b.label}\n✓ Purchased`);
+          b.onBuy?.();
+          toast(`${b.label} purchased!`);
+        } else {
+          toast(`Need $${fmt(b.cost)}`);
+        }
+      }
     }
   }
-});
-
-window.addEventListener('keydown',(e)=>{
-  if(!buildMode) return;
-  if(e.code==='KeyR'){ buildMode.rotY+=Math.PI/2; if(ghost) ghost.rotation.y=buildMode.rotY; }
-  if(e.code==='KeyQ'){ buildMode.heightOffset=clamp(buildMode.heightOffset-0.1,-0.0,1.5); }
-  if(e.code==='KeyE'){ buildMode.heightOffset=clamp(buildMode.heightOffset+0.1,-0.0,1.5); }
-});
-
-// ---------- Worker NPC ----------
-let worker=null;
-function ensureWorker(){
-  if(worker || !state.worker) return;
-  const w=new THREE.Mesh(new THREE.CapsuleGeometry(0.3,0.7,6,12), new THREE.MeshStandardMaterial({color:0x9ad0ff}));
-  w.position.set(2,0.6,2);
-  w.castShadow=true;
-  scene.add(w);
-  worker={mesh:w, cooldown:0};
-}
-function updateWorker(dt){
-  if(!worker) return;
-  worker.cooldown-=dt;
-  if(worker.cooldown<=0){
-    worker.cooldown=2.5;
-    // Nudge nearest item upwards if it's slightly sunk
-    let best=null, bestD=999;
-    for(const it of items){
-      const d=it.mesh.position.distanceTo(worker.mesh.position);
-      if(d<bestD){ best=it; bestD=d; }
-    }
-    if(best && bestD<6){
-      best.mesh.position.y+=0.4;
-      best.vel.set(0,0,0);
-      toast('Worker rescued an item');
-    }
-  }
-}
-
-// ---------- Day/Night ----------
-let tDay=0; // 0..1
-function updateDayNight(dt){
-  tDay=(tDay+dt*0.02)%1;
-  const theta=tDay*TAU;
-  const sunY=Math.cos(theta)*0.8+0.2;
-  dirLight.intensity=clamp(sunY,0.1,1.0);
-  dirLight.position.set(30*Math.cos(theta), 40*clamp(sunY,0.1,1.0)+10, 30*Math.sin(theta));
-  const skyCol=new THREE.Color().setHSL(0.58, 0.45, lerp(0.45, 0.08, (1-sunY)));
-  scene.background=skyCol;
-}
-
-// ---------- Player Movement ----------
-function updatePlayer(dt){
-  const speed=(keys.ShiftLeft?6.3:4.0);
-  const fwd=new THREE.Vector3(0,0,-1).applyEuler(camPivot.rotation);
-  fwd.y=0; fwd.normalize();
-  const right=new THREE.Vector3().crossVectors(fwd,new THREE.Vector3(0,1,0)).normalize().multiplyScalar(-1);
-
-  let acc=new THREE.Vector3();
-  if(keys.KeyW) acc.add(fwd);
-  if(keys.KeyS) acc.sub(fwd);
-  if(keys.KeyA) acc.sub(right);
-  if(keys.KeyD) acc.add(right);
-
-  if(acc.lengthSq()>0) acc.normalize().multiplyScalar(speed);
-  player.vel.x=lerp(player.vel.x, acc.x, 0.18);
-  player.vel.z=lerp(player.vel.z, acc.z, 0.18);
-
-  // gravity & jump
-  player.vel.y-=18*dt;
-  if(player.obj.position.y<=0.8){ player.obj.position.y=0.8; player.vel.y=0; player.onGround=true; }
-  else player.onGround=false;
-  if(keys.Space && player.onGround){ player.vel.y=6.3; }
-
-  player.obj.position.addScaledVector(player.vel, dt);
-}
-
-// ---------- UI ----------
-const moneyEl=document.getElementById('money');
-const multEl=document.getElementById('mult');
-const fovSlider=document.getElementById('fov');
-const gridToggle=document.getElementById('gridToggle');
-
-function updateUI(){
-  moneyEl.textContent=fmt(state.money);
-  multEl.textContent=state.mult.toFixed(1)+'x';
-  // Buttons cost text
-  setCostBtn('buyDropper1', 'Buy Tier 1', price('dropper1', COSTS.dropper1));
-  setCostBtn('buyDropper2', 'Buy Tier 2', price('dropper2', COSTS.dropper2));
-  setCostBtn('buyDropper3', 'Buy Tier 3', price('dropper3', COSTS.dropper3));
-  setCostBtn('buyConveyor', 'Buy Conveyor', price('conveyor', COSTS.conveyor));
-  setCostBtn('buySpeed', 'Upgrade Speed', price('speed', COSTS.speed));
-  setCostBtn('buyWorker', state.worker?'Worker Hired':'Hire Worker', state.worker?0:price('worker', COSTS.worker), !!state.worker);
-}
-
-function setCostBtn(id,label,cost,disabled=false){
-  const el=document.getElementById(id);
-  el.textContent = cost>0 ? `${label} ($${fmt(cost)})` : label;
-  el.disabled = disabled || !canAfford(cost);
-}
-
-document.getElementById('buyConveyor').onclick=()=>{
-  setBuildMode({type:'conveyor'});
-};
-document.getElementById('buyDropper1').onclick=()=>{
-  setBuildMode({type:'dropper', tier:1});
-};
-document.getElementById('buyDropper2').onclick=()=>{
-  setBuildMode({type:'dropper', tier:2});
-};
-document.getElementById('buyDropper3').onclick=()=>{
-  setBuildMode({type:'dropper', tier:3});
-};
-document.getElementById('buySpeed').onclick=()=>{
-  const cost=price('speed', COSTS.speed);
-  if(spend(cost)){ state.speed=+(state.speed+0.1).toFixed(2); toast(`Conveyor speed +10% ($${fmt(cost)})`); updateUI(); }
-};
-document.getElementById('buyWorker').onclick=()=>{
-  if(state.worker){ toast('Worker already hired'); return; }
-  const cost=price('worker', COSTS.worker);
-  if(spend(cost)){ state.worker=true; ensureWorker(); toast('Worker hired!'); updateUI(); }
-};
-
-document.getElementById('rebirthBtn').onclick=()=>{
-  if(state.money<50000){ toast('Need $50,000 to rebirth'); return; }
-  state={money:150, mult:+(state.mult*1.5).toFixed(1), speed:1.0, worker:false, grid:state.grid, fov:state.fov, conveyors:[], droppers:[]};
-  // cleanup scene objects
-  for(const c of conveyors) scene.remove(c.mesh);
-  for(const d of droppers) scene.remove(d.mesh);
-  for(const it of items) scene.remove(it.mesh);
-  conveyors.length=0; droppers.length=0; items.length=0;
-  addConveyor({x:-3.5,y:0.2,z:0, rotY:0});
-  updateUI(); toast('Rebirth complete! Multiplier increased.');
-};
-
-document.getElementById('saveBtn').onclick=()=>{
-  localStorage.setItem('tycoon-save', JSON.stringify(state));
-  toast('Game saved!');
-};
-document.getElementById('loadBtn').onclick=loadState;
-
-fovSlider.addEventListener('input',()=>{
-  state.fov=+fovSlider.value; camera.fov=state.fov; camera.updateProjectionMatrix();
-});
-gridToggle.addEventListener('change',()=>{
-  state.grid=gridToggle.checked; gridHelper.visible=state.grid;
-});
-
-// ---------- Minimap ----------
-const minimap=document.getElementById('minimap');
-const mmCtx=minimap.getContext('2d');
-function drawMinimap(){
-  const w=minimap.width=minimap.clientWidth*devicePixelRatio;
-  const h=minimap.height=minimap.clientHeight*devicePixelRatio;
-  mmCtx.clearRect(0,0,w,h);
-  mmCtx.fillStyle='#0b132a'; mmCtx.fillRect(0,0,w,h);
-  // base
-  mmCtx.fillStyle='#2b8443';
-  mmCtx.fillRect(w*0.1,h*0.1,w*0.8,h*0.8);
-  // conveyors
-  mmCtx.fillStyle='#6a6cff';
-  for(const c of conveyors){
-    const x=(c.mesh.position.x/200+0.5)*w;
-    const y=(c.mesh.position.z/200+0.5)*h;
-    mmCtx.fillRect(x-3,y-3,6,6);
-  }
-  // droppers
-  mmCtx.fillStyle='#ffd54a';
-  for(const d of droppers){
-    const x=(d.mesh.position.x/200+0.5)*w;
-    const y=(d.mesh.position.z/200+0.5)*h;
-    mmCtx.fillRect(x-3,y-3,6,6);
-  }
-  // player
-  mmCtx.fillStyle='#ffffff';
-  const px=(player.obj.position.x/200+0.5)*w;
-  const py=(player.obj.position.z/200+0.5)*h;
-  mmCtx.beginPath(); mmCtx.arc(px,py,4,0,TAU); mmCtx.fill();
 }
 
 // ---------- Save / Load ----------
-function loadState(){
-  const raw=localStorage.getItem('tycoon-save');
+function saveGame(){
+  const s = JSON.stringify(state);
+  localStorage.setItem('tycoon-save', s);
+  toast('Saved!');
+}
+function loadGame(){
+  const raw = localStorage.getItem('tycoon-save');
   if(!raw){ toast('No save found'); return; }
   try{
-    const s=JSON.parse(raw);
-    // replace state
-    state=s;
-    // Cleanup existing
+    // clear dynamic
     for(const c of conveyors) scene.remove(c.mesh);
     for(const d of droppers) scene.remove(d.mesh);
-    for(const it of items) scene.remove(it.mesh);
-    conveyors.length=0; droppers.length=0; items.length=0;
+    if(collector) scene.remove(collector), collector=null;
+    conveyors.length=0; droppers.length=0; items.forEach(it=>scene.remove(it.mesh)); items.length=0;
+    buyPads.forEach(b=>scene.remove(b.mesh)); buyPads.length=0;
+    floors.forEach((f,i)=>{ if(i>0&&f){ scene.remove(f); } });
+    floors.length=1; floors[0]=base;
 
-    // Rebuild from state arrays
-    for(const c of state.conveyors){ addConveyor({x:c.pos[0],y:c.pos[1],z:c.pos[2], rotY:c.rotY}); }
-    for(const d of state.droppers){ addDropper({x:d.pos[0],y:d.pos[1],z:d.pos[2], rotY:d.rotY, tier:d.tier}); }
-    // worker
-    if(state.worker) ensureWorker();
-    // UI settings
-    gridHelper.visible=state.grid; gridToggle.checked=state.grid;
-    camera.fov=state.fov; camera.updateProjectionMatrix(); fovSlider.value=state.fov;
-    updateUI();
-    toast('Loaded save!');
-  }catch(e){ console.error(e); toast('Failed to load save'); }
+    state = JSON.parse(raw);
+
+    // rebuild floors
+    for(let lvl=2; lvl<=state.floorsUnlocked; lvl++) addUpperFloor(lvl);
+
+    // rebuild conveyors/droppers/collector
+    state.conveyors.forEach(c=> addConveyor(new THREE.Vector3(c.pos[0],c.pos[1],c.pos[2]), c.rotY));
+    state.droppers.forEach(d=> addDropper(new THREE.Vector3(d.pos[0],d.pos[1],d.pos[2]), d.rotY, d.tier));
+    if(state.hasCollector) addCollector(new THREE.Vector3(8,0,0));
+
+    moneyEl.textContent = fmt(state.money);
+
+    // rebuild buy pads
+    buildBuyPads();
+
+    toast('Loaded!');
+  }catch(e){ console.error(e); toast('Failed to load'); }
 }
+
+document.getElementById('saveBtn').onclick=saveGame;
+document.getElementById('loadBtn').onclick=loadGame;
+document.getElementById('resetBtn').onclick=()=>{ localStorage.removeItem('tycoon-save'); location.reload(); };
+
+// ---------- Initial Content ----------
+function starterLayout(){
+  // Starter conveyor & dropper to “feel” the loop
+  addConveyor(new THREE.Vector3(-6,0.2,0), 0);
+  addDropper(new THREE.Vector3(-8,0,0), 0, 1);
+  // Place collector purchase pad and more
+  buildBuyPads();
+}
+
+function buildBuyPads(){
+  // Clear existing pads (for reload)
+  buyPads.forEach(b=>scene.remove(b.mesh)); buyPads.length=0;
+
+  // Base floor pads
+  if(!state.hasCollector){
+    addBuyPad(new THREE.Vector3(8,0.12,0), COST.collector, 'Collector', ()=>{
+      addCollector(new THREE.Vector3(8,0,0));
+    });
+  }
+  addBuyPad(new THREE.Vector3(-2,0.12,6), COST.conveyor, 'Conveyor', ()=>{
+    addConveyor(new THREE.Vector3(-2,0.2,0), 0);
+  });
+  addBuyPad(new THREE.Vector3(-4,0.12,6), COST.dropper1, 'Dropper T1', ()=>{
+    addDropper(new THREE.Vector3(-4,0,0), 0, 1);
+  });
+  addBuyPad(new THREE.Vector3(-6,0.12,6), COST.dropper2, 'Dropper T2', ()=>{
+    addDropper(new THREE.Vector3(-6,0,0), 0, 2);
+  });
+  addBuyPad(new THREE.Vector3(-8,0.12,6), COST.dropper3, 'Dropper T3', ()=>{
+    addDropper(new THREE.Vector3(-8,0,0), 0, 3);
+  });
+
+  // Upper floors pads (only show if not unlocked yet)
+  if(state.floorsUnlocked<2){
+    addBuyPad(new THREE.Vector3(10,0.12,8), COST.floor2, 'Unlock Floor 2', ()=>{
+      state.floorsUnlocked=2; addUpperFloor(2); buildBuyPads();
+    });
+  } else if(state.floorsUnlocked<3){
+    addBuyPad(new THREE.Vector3(10,5.12,8), COST.floor3, 'Unlock Floor 3', ()=>{
+      state.floorsUnlocked=3; addUpperFloor(3); buildBuyPads();
+    });
+  } else {
+    // Example pads on floor 2/3
+    addBuyPad(new THREE.Vector3(-4,5.12,6), 400, 'Conveyor (F2)', ()=>{
+      addConveyor(new THREE.Vector3(-4,5.2,0), 0);
+    });
+    addBuyPad(new THREE.Vector3(-6,10.12,6), 800, 'Dropper T2 (F3)', ()=>{
+      addDropper(new THREE.Vector3(-6,10,0), 0, 2);
+    });
+  }
+}
+
+starterLayout();
+moneyEl.textContent = fmt(state.money);
 
 // ---------- Game Loop ----------
 let last=performance.now();
 function loop(now){
-  const dt=Math.min(0.033,(now-last)/1000); last=now;
+  const dt = Math.min(0.033, (now-last)/1000); last=now;
 
   updatePlayer(dt);
   updateDroppers(dt);
-  moveItems(dt);
+  updateItems(dt);
   updateParticles(dt);
-  updateWorker(dt);
-  updateDayNight(dt);
-  drawMinimap();
+  updateBuyPads(dt);
 
   renderer.render(scene, camera);
   requestAnimationFrame(loop);
 }
-updateUI();
-ensureWorker(); // only spawns if hired later; safe call
 requestAnimationFrame(loop);
 
-// ---------- Starter content ----------
-addDropper({x:-5.5,y:0.0,z:0,rotY:0,tier:1}); // a starter dropper for feel
-
-// ---------- Quality-of-life ----------
-window.addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight; camera.updateProjectionMatrix();
+// ---------- Resize ----------
+window.addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
 });
 </script>
